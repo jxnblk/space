@@ -1,5 +1,5 @@
 {
-  "name": "space-css",
+  "name": "space",
   "private": true,
   "version": "1.0.0",
   "description": "Functional CSS white space utility microservice",
@@ -8,14 +8,12 @@
     "start": "./node_modules/micro/bin/micro -p 3000",
     "test": "ava"
   },
-  "keywords": [],
   "author": "Brent Jackson",
   "license": "MIT",
   "devDependencies": {
     "ava": "^0.16.0"
   },
   "dependencies": {
-    "micro": "^6.1.0",
-    "qs": "^6.2.1"
+    "micro": "^6.1.0"
   }
 }
