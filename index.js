@@ -23,7 +23,16 @@ const createPrefixes = length => {
 
 const getPrefix = length => i => {
   const prefixes = createPrefixes(length)
+
   return prefixes[i]
+}
+
+const getShortcutSelector = props => {
+  const first = props[0].charAt(0)
+  if (/left/.test(props[0])) {
+    return first + 'x'
+  }
+  return first + 'y'
 }
 
 const createRule = (prefix) => property => (step, i) => {
@@ -31,6 +40,13 @@ const createRule = (prefix) => property => (step, i) => {
     ? `${prefix}-${abbr(property)}${i}`
     : `${abbr(property)}${i}`
   return `.${selector}{${property}:${step}px}`
+}
+
+const createSymmetricalRule = (prefix = '') => selector => (properties = []) => (step, i) => {
+  const sel = prefix
+    ? `${prefix}-${selector}${i}`
+    : `${selector}${i}`
+  return `.${sel}{${properties.map(p => `${p}:${step}px`).join(';')}}`
 }
 
 const createMediaRule = breakpoint => rules => {
@@ -53,16 +69,26 @@ const space = ({
   ],
   properties = [
     'margin',
+    [ 'margin-left', 'margin-right' ],
+    [ 'margin-top', 'margin-bottom' ],
     'margin-top',
     'margin-right',
     'margin-bottom',
     'margin-left',
     'padding',
+    [ 'padding-left', 'padding-right' ],
+    [ 'padding-top', 'padding-bottom' ],
     'padding-top',
     'padding-right',
     'padding-bottom',
     'padding-left',
-  ]
+  ],
+  shortcuts = {
+    mx: [ 'margin-left', 'margin-right' ],
+    my: [ 'margin-top', 'margin-bottom' ],
+    px: [ 'padding-left', 'padding-right' ],
+    py: [ 'padding-top', 'padding-bottom' ]
+  }
 } = {}) => {
   const rules = []
 
@@ -75,23 +101,37 @@ const space = ({
     .filter(b => !isNaN(parseFloat(b)))
     .map((b, i) => ({
       breakpoint: b,
-      func: createRule(prefix(i))
+      func: createRule(prefix(i)),
+      shortcut: createSymmetricalRule(prefix(i))
     }))
 
   breakpointRules.unshift({
     breakpoint: null,
-    func: createRule(null)
+    func: createRule(null),
+    shortcut: createSymmetricalRule(null)
   })
 
-  breakpointRules.forEach(({ breakpoint, func }) => {
+  breakpointRules.forEach(({ breakpoint, func, shortcut }) => {
     const arr =  []
-    const propertyRules = properties.map((p, i) => func(p))
+    const propertyRules = properties.map((p, i) => {
+      return typeof p === 'string'
+        ? func(p)
+        : shortcut(getShortcutSelector(p))(p)
+    })
 
     propertyRules.forEach(p => {
       space.forEach((step, i) => {
         arr.push(p(step, i))
       })
     })
+    /*
+    const shortcutRules = Object.keys(shortcuts).map((key, i) => {
+      const props = shortcuts[key]
+      space.forEach((step, i) => {
+        arr.push(createSymmetricalRule()(key)(props)(step, i))
+      })
+    })
+    */
 
     if (breakpoint) {
       rules.push(createMediaRule(breakpoint)(arr))
